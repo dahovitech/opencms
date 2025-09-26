@@ -6,6 +6,7 @@
 /var/
 
 # Ignorer les fichiers de configuration sensibles
+/.env
 /.env.local
 /.env.*.local
 /.env.test
@@ -19,6 +20,7 @@
 /public/build/
 /public/uploads/*
 !/public/uploads/.gitkeep
+!/public/.htaccess
 
 # Ignorer les fichiers temporaires
 *.cache
