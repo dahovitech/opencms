@@ -1,5 +1,7 @@
 {% extends 'admin/base.html.twig' %}
 
+{% form_theme form 'form_theme.html.twig' %}
+
 {% block title %}Éditer Service - {{ service.title }}{% endblock %}
 
 {% block body %}
@@ -18,7 +20,7 @@
                 </div>
             </div>
 
-            <form method="post" class="needs-validation" novalidate>
+            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
                 <div class="row">
                     <!-- Service Configuration -->
                     <div class="col-md-4">
@@ -27,36 +29,11 @@
                                 <h5 class="mb-0">Configuration du Service</h5>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="slug" class="form-label">Slug (URL)</label>
-                                    <input type="text" class="form-control" id="slug" name="slug" 
-                                           value="{{ service.slug }}" required>
-                                    <div class="form-text">URL: /service/{{ service.slug }}</div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="sortOrder" class="form-label">Ordre de tri</label>
-                                    <input type="number" class="form-control" id="sortOrder" name="sortOrder" 
-                                           value="{{ service.sortOrder }}" min="0">
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="isActive" 
-                                               name="isActive" value="1" 
-                                               {{ service.isActive ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="isActive">
-                                            Service actif
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <!-- Sélecteur d'image -->
-                                {% include 'components/media_selector.html.twig' with {
-                                    'selectedMedia': service.image,
-                                    'inputName': 'imageId',
-                                    'label': 'Image du service'
-                                } %}
+                                {{ form_row(form.slug) }}
+                                <div class="form-text mb-3">URL: /service/{{ service.slug }}</div>
+                                {{ form_row(form.sortOrder) }}
+                                {{ form_row(form.isActive) }}
+                                {{ form_row(form.image) }}
 
                                 <hr>
 
@@ -160,66 +137,28 @@
                                              id="{{ language.code }}-content" 
                                              role="tabpanel">
                                             <div class="p-3">
-                                                <div class="mb-3">
-                                                    <label for="title_{{ language.code }}" class="form-label">
-                                                        Titre *
-                                                    </label>
-                                                    <input type="text" 
-                                                           class="form-control" 
-                                                           id="title_{{ language.code }}" 
-                                                           name="translations[{{ language.code }}][title]" 
-                                                           value="{{ translation ? translation.title : '' }}"
-                                                           required>
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <label for="description_{{ language.code }}" class="form-label">
-                                                        Description
-                                                    </label>
-                                                    <textarea class="form-control" 
-                                                              id="description_{{ language.code }}" 
-                                                              name="translations[{{ language.code }}][description]" 
-                                                              rows="5">{{ translation ? translation.description : '' }}</textarea>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="metaTitle_{{ language.code }}" class="form-label">
-                                                                Méta titre (SEO)
-                                                            </label>
-                                                            <input type="text" 
-                                                                   class="form-control" 
-                                                                   id="metaTitle_{{ language.code }}" 
-                                                                   name="translations[{{ language.code }}][metaTitle]" 
-                                                                   value="{{ translation ? translation.metaTitle : '' }}"
-                                                                   maxlength="60">
-                                                            <div class="form-text">Recommandé: 50-60 caractères</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="mb-3">
-                                                            <label for="metaDescription_{{ language.code }}" class="form-label">
-                                                                Méta description (SEO)
-                                                            </label>
-                                                            <textarea class="form-control" 
-                                                                      id="metaDescription_{{ language.code }}" 
-                                                                      name="translations[{{ language.code }}][metaDescription]" 
-                                                                      rows="3" 
-                                                                      maxlength="160">{{ translation ? translation.metaDescription : '' }}</textarea>
-                                                            <div class="form-text">Recommandé: 150-160 caractères</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {% if translation %}
+                                                {% set translationFormName = 'translation_' ~ language.code %}
+                                                {% if form[translationFormName] is defined %}
+                                                    {{ form_row(form[translationFormName].title) }}
+                                                    {{ form_row(form[translationFormName].description) }}
                                                     <div class="row">
-                                                        <div class="col-12">
-                                                            <small class="text-muted">
-                                                                Dernière modification: {{ translation.updatedAt|date('d/m/Y H:i') }}
-                                                            </small>
+                                                        <div class="col-md-6">
+                                                            {{ form_row(form[translationFormName].metaTitle) }}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            {{ form_row(form[translationFormName].metaDescription) }}
                                                         </div>
                                                     </div>
+
+                                                    {% if translation %}
+                                                        <div class="row">
+                                                            <div class="col-12">
+                                                                <small class="text-muted">
+                                                                    Dernière modification: {{ translation.updatedAt|date('d/m/Y H:i') }}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
                                                 {% endif %}
                                             </div>
                                         </div>
@@ -240,7 +179,7 @@
                         </div>
                     </div>
                 </div>
-            </form>
+            {{ form_end(form) }}
         </div>
     </div>
 </div>
@@ -287,11 +226,11 @@ document.getElementById('duplicateBtn').addEventListener('click', function() {
 });
 
 // Character counters for meta fields
-function addCharacterCounter(inputId, maxLength) {
-    const input = document.getElementById(inputId);
+function addCharacterCounter(inputSelector, maxLength) {
+    const input = document.querySelector(inputSelector);
     if (input) {
         const counter = document.createElement('small');
-        counter.className = 'text-muted';
+        counter.className = 'text-muted ms-2';
         input.parentNode.appendChild(counter);
         
         function updateCounter() {
@@ -308,8 +247,8 @@ function addCharacterCounter(inputId, maxLength) {
 
 // Add counters for meta fields
 {% for language in languages %}
-addCharacterCounter('metaTitle_{{ language.code }}', 60);
-addCharacterCounter('metaDescription_{{ language.code }}', 160);
+addCharacterCounter('[name="service[translation_{{ language.code }}][metaTitle]"]', 60);
+addCharacterCounter('[name="service[translation_{{ language.code }}][metaDescription]"]', 160);
 {% endfor %}
 </script>
 {% endblock %}

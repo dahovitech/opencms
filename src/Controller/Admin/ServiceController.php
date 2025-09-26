@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 
 use App\Entity\Service;
 use App\Entity\ServiceTranslation;
+use App\Form\Type\ServiceType;
 use App\Repository\LanguageRepository;
 use App\Repository\MediaRepository;
 use App\Repository\ServiceRepository;
@@ -48,35 +49,41 @@ class ServiceController extends AbstractController
         $service = new Service();
         $languages = $this->languageRepository->findActiveLanguages();
         $defaultLanguage = $this->languageRepository->findDefaultLanguage();
+        
+        $form = $this->createForm(ServiceType::class, $service, [
+            'is_edit' => false
+        ]);
 
-        if ($request->isMethod('POST')) {
-            $data = $request->request->all();
-            
-            if (!empty($data['slug'])) {
-                $service->setSlug($data['slug']);
-            }
-            
-            $service->setIsActive($data['isActive'] ?? true);
-            $service->setSortOrder((int)($data['sortOrder'] ?? 0));
+        $form->handleRequest($request);
 
-            // Gestion de l'image
-            if (!empty($data['imageId'])) {
-                $media = $this->mediaRepository->find($data['imageId']);
-                if ($media) {
-                    $service->setImage($media);
-                }
-            }
-
-            $translationsData = [];
-            foreach ($languages as $language) {
-                $langCode = $language->getCode();
-                if (!empty($data['translations'][$langCode])) {
-                    $translationsData[$langCode] = $data['translations'][$langCode];
-                }
-            }
-
+        if ($form->isSubmitted() && $form->isValid()) {
             try {
-                $this->translationService->createOrUpdateService($service, $translationsData);
+                // Sauvegarder le service principal
+                $this->entityManager->persist($service);
+                
+                // Traiter les traductions
+                foreach ($languages as $language) {
+                    $translationFormName = 'translation_' . $language->getCode();
+                    if ($form->has($translationFormName)) {
+                        $translationData = $form->get($translationFormName)->getData();
+                        
+                        if ($translationData && (!empty($translationData->getTitle()) || !empty($translationData->getDescription()))) {
+                            $translation = new ServiceTranslation();
+                            $translation->setService($service);
+                            $translation->setLanguage($language);
+                            $translation->setTitle($translationData->getTitle() ?? '');
+                            $translation->setDescription($translationData->getDescription() ?? '');
+                            $translation->setMetaTitle($translationData->getMetaTitle() ?? '');
+                            $translation->setMetaDescription($translationData->getMetaDescription() ?? '');
+                            
+                            $this->entityManager->persist($translation);
+                            $service->addTranslation($translation);
+                        }
+                    }
+                }
+
+                $this->entityManager->flush();
+                
                 $this->addFlash('success', 'Service créé avec succès.');
                 return $this->redirectToRoute('admin_service_edit', ['id' => $service->getId()]);
             } catch (\Exception $e) {
@@ -86,6 +93,7 @@ class ServiceController extends AbstractController
 
         return $this->render('admin/service/new.html.twig', [
             'service' => $service,
+            'form' => $form,
             'languages' => $languages,
             'defaultLanguage' => $defaultLanguage
         ]);
@@ -180,39 +188,64 @@ class ServiceController extends AbstractController
     {
         $languages = $this->languageRepository->findActiveLanguages();
         $defaultLanguage = $this->languageRepository->findDefaultLanguage();
+        
+        $form = $this->createForm(ServiceType::class, $service, [
+            'is_edit' => true
+        ]);
 
-        if ($request->isMethod('POST')) {
-            $data = $request->request->all();
+        // Pré-remplir les traductions existantes
+        foreach ($languages as $language) {
+            $translation = $service->getTranslation($language->getCode());
+            $translationFormName = 'translation_' . $language->getCode();
             
-            if (!empty($data['slug'])) {
-                $service->setSlug($data['slug']);
+            if ($form->has($translationFormName) && $translation) {
+                $form->get($translationFormName)->setData($translation);
             }
-            
-            $service->setIsActive($data['isActive'] ?? true);
-            $service->setSortOrder((int)($data['sortOrder'] ?? 0));
+        }
 
-            // Gestion de l'image
-            if (isset($data['imageId'])) {
-                if (empty($data['imageId'])) {
-                    $service->setImage(null);
-                } else {
-                    $media = $this->mediaRepository->find($data['imageId']);
-                    if ($media) {
-                        $service->setImage($media);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                // Traiter les traductions
+                foreach ($languages as $language) {
+                    $translationFormName = 'translation_' . $language->getCode();
+                    if ($form->has($translationFormName)) {
+                        $translationData = $form->get($translationFormName)->getData();
+                        
+                        $existingTranslation = $service->getTranslation($language->getCode());
+                        
+                        if ($translationData && (!empty($translationData->getTitle()) || !empty($translationData->getDescription()))) {
+                            if ($existingTranslation) {
+                                // Mettre à jour la traduction existante
+                                $existingTranslation->setTitle($translationData->getTitle() ?? '');
+                                $existingTranslation->setDescription($translationData->getDescription() ?? '');
+                                $existingTranslation->setMetaTitle($translationData->getMetaTitle() ?? '');
+                                $existingTranslation->setMetaDescription($translationData->getMetaDescription() ?? '');
+                                $existingTranslation->setUpdatedAt();
+                            } else {
+                                // Créer une nouvelle traduction
+                                $translation = new ServiceTranslation();
+                                $translation->setService($service);
+                                $translation->setLanguage($language);
+                                $translation->setTitle($translationData->getTitle() ?? '');
+                                $translation->setDescription($translationData->getDescription() ?? '');
+                                $translation->setMetaTitle($translationData->getMetaTitle() ?? '');
+                                $translation->setMetaDescription($translationData->getMetaDescription() ?? '');
+                                
+                                $this->entityManager->persist($translation);
+                                $service->addTranslation($translation);
+                            }
+                        } elseif ($existingTranslation) {
+                            // Supprimer la traduction si elle est vide
+                            $service->removeTranslation($existingTranslation);
+                            $this->entityManager->remove($existingTranslation);
+                        }
                     }
                 }
-            }
 
-            $translationsData = [];
-            foreach ($languages as $language) {
-                $langCode = $language->getCode();
-                if (!empty($data['translations'][$langCode])) {
-                    $translationsData[$langCode] = $data['translations'][$langCode];
-                }
-            }
-
-            try {
-                $this->translationService->createOrUpdateService($service, $translationsData);
+                $this->entityManager->flush();
+                
                 $this->addFlash('success', 'Service mis à jour avec succès.');
                 return $this->redirectToRoute('admin_service_edit', ['id' => $service->getId()]);
             } catch (\Exception $e) {
@@ -222,6 +255,7 @@ class ServiceController extends AbstractController
 
         return $this->render('admin/service/edit.html.twig', [
             'service' => $service,
+            'form' => $form,
             'languages' => $languages,
             'defaultLanguage' => $defaultLanguage
         ]);
