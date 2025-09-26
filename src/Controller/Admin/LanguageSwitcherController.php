@@ -7,8 +7,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/language', name: 'admin_language_')]
+#[IsGranted('ROLE_ADMIN')]
 class LanguageSwitcherController extends AbstractController
 {
     public function __construct(

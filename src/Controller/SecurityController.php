@@ -34,6 +34,14 @@ class SecurityController extends AbstractController
     #[Route(path: '/user-dashboard', name: 'user_dashboard')]
     public function userDashboard(): Response
     {
-        return $this->redirectToRoute('admin_dashboard');
+        // Vérifier si l'utilisateur a le rôle admin avant de rediriger
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return $this->redirectToRoute('admin_dashboard');
+        }
+        
+        // Pour les utilisateurs normaux, rediriger vers une page appropriée
+        // ou afficher un dashboard utilisateur spécifique
+        $this->addFlash('warning', 'Vous n\'avez pas les permissions d\'accéder à l\'administration.');
+        return $this->redirectToRoute('home');
     }
 }
