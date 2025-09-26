@@ -1,0 +1,203 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Test OpenEditor - Liste des Services{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3">
+                        <i class="bi bi-magic"></i> Test OpenEditor
+                    </h1>
+                    <p class="text-muted mb-0">Testez OpenEditor avec les services OpenCMS</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{{ path('admin_test_openeditor_new') }}" class="btn btn-primary">
+                        <i class="bi bi-plus"></i> Nouveau Service
+                    </a>
+                    <a href="{{ path('admin_test_openeditor_demo') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-play"></i> Démo
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistiques OpenEditor -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-1">{{ services|length }}</h4>
+                                    <p class="mb-0">Services de test</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-list-task fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-1">{{ languages|length }}</h4>
+                                    <p class="mb-0">Langues supportées</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-translate fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-1">100%</h4>
+                                    <p class="mb-0">OpenEditor intégré</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-check-circle fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-1">WYSIWYG</h4>
+                                    <p class="mb-0">Éditeur actif</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="bi bi-pencil-square fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des services -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Services créés avec OpenEditor</h5>
+                </div>
+                <div class="card-body">
+                    {% if services is empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted"></i>
+                            <h4 class="text-muted mt-3">Aucun service de test</h4>
+                            <p class="text-muted">Créez votre premier service pour tester OpenEditor</p>
+                            <a href="{{ path('admin_test_openeditor_new') }}" class="btn btn-primary">
+                                <i class="bi bi-plus"></i> Créer un service
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Slug</th>
+                                        <th>Image</th>
+                                        <th>Traductions</th>
+                                        <th>Status</th>
+                                        <th>Créé le</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for service in services %}
+                                    <tr>
+                                        <td>
+                                            <code>#{{ service.id }}</code>
+                                        </td>
+                                        <td>
+                                            <strong>{{ service.slug }}</strong>
+                                        </td>
+                                        <td>
+                                            {% if service.image %}
+                                                <i class="bi bi-image text-success"></i>
+                                            {% else %}
+                                                <i class="bi bi-image text-muted"></i>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% set translationCount = service.translations|length %}
+                                            <span class="badge bg-{{ translationCount > 0 ? 'success' : 'secondary' }}">
+                                                {{ translationCount }} / {{ languages|length }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ service.isActive ? 'success' : 'secondary' }}">
+                                                {{ service.isActive ? 'Actif' : 'Inactif' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ service.createdAt|date('d/m/Y H:i') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ path('admin_test_openeditor_edit', {'id': service.id}) }}" 
+                                                   class="btn btn-outline-primary">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informations OpenEditor -->
+            <div class="card mt-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Fonctionnalités OpenEditor Testées
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>✅ Fonctionnalités Validées</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check text-success"></i> Éditeur WYSIWYG complet</li>
+                                <li><i class="bi bi-check text-success"></i> Toolbar personnalisable</li>
+                                <li><i class="bi bi-check text-success"></i> Thèmes multiples</li>
+                                <li><i class="bi bi-check text-success"></i> Hauteur configurable</li>
+                                <li><i class="bi bi-check text-success"></i> Sauvegarde automatique</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>🔄 En Cours de Test</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-hourglass text-warning"></i> Gestionnaire de médias</li>
+                                <li><i class="bi bi-hourglass text-warning"></i> Upload d'images</li>
+                                <li><i class="bi bi-hourglass text-warning"></i> Validation des données</li>
+                                <li><i class="bi bi-hourglass text-warning"></i> API JavaScript</li>
+                                <li><i class="bi bi-hourglass text-warning"></i> Multi-langues</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

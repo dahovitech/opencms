@@ -1,0 +1,70 @@
+{# OpenEditor - Template de formulaire personnalisé pour OpenCMS #}
+{# Auteur: MiniMax Agent #}
+
+{# Template pour le champ OpenEditor #}
+{%- block open_editor_widget -%}
+    {%- set attr = attr|merge({'class': (attr.class|default('') ~ ' open-editor-field')|trim}) -%}
+    
+    {# Les data-attributes sont déjà ajoutés par le FormType PHP #}
+    {# Plus besoin de duplication ici #}
+    
+    {{- block('textarea_widget') -}}
+{%- endblock open_editor_widget -%}
+
+{# Template pour le label (identique au textarea) #}
+{%- block open_editor_label -%}
+    {{- block('form_label') -}}
+{%- endblock open_editor_label -%}
+
+{# Template pour les erreurs (identique au textarea) #}
+{%- block open_editor_errors -%}
+    {{- block('form_errors') -}}
+{%- endblock open_editor_errors -%}
+
+{# Template pour la ligne complète (avec label et erreurs) #}
+{%- block open_editor_row -%}
+    <div class="form-group open-editor-group open-editor-theme-{{ open_editor_config.theme|default('default') }} mb-3"{{ block('widget_container_attributes') }}>
+        {{- form_label(form) -}}
+        <div class="open-editor-wrapper">
+            {{- form_errors(form) -}}
+            {{- form_widget(form) -}}
+            
+            {# Aide contextuelle #}
+            {% if help is defined and help %}
+                <div class="form-text text-muted open-editor-help">
+                    {{ help|trans({}, translation_domain) }}
+                </div>
+            {% endif %}
+            
+            {# Informations sur l'éditeur avec gestion sécurisée des valeurs #}
+            <div class="form-text text-muted open-editor-info">
+                <span class="editor-badge">
+                    <i class="bi bi-pencil-square"></i> OpenEditor
+                </span>
+                {% if open_editor_config is defined and open_editor_config.media_enabled|default(true) %}
+                    | <span class="feature-badge">
+                        <i class="bi bi-images"></i> Gestionnaire de médias
+                    </span>
+                {% endif %}
+                {% if open_editor_config is defined and open_editor_config.autosave|default(false) %}
+                    | <span class="feature-badge">
+                        <i class="bi bi-cloud-check"></i> Sauvegarde auto ({{ (open_editor_config.autosave_interval|default(30000) / 1000)|number_format(0) }}s)
+                    </span>
+                {% endif %}
+                {% if open_editor_config is defined and open_editor_config.theme|default('default') != 'default' %}
+                    | <span class="theme-badge">
+                        <i class="bi bi-palette"></i> Thème: {{ open_editor_config.theme|title }}
+                    </span>
+                {% endif %}
+            </div>
+            
+            {# Indicateur de loading pour l'initialisation JavaScript #}
+            <div class="open-editor-loading d-none">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                    <small class="text-muted">Chargement de l'éditeur...</small>
+                </div>
+            </div>
+        </div>
+    </div>
+{%- endblock open_editor_row -%}

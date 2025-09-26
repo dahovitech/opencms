@@ -1,0 +1,265 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'form/openeditor_theme.html.twig' %}
+
+{% block title %}Test OpenEditor - Nouveau Service{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="{{ asset('assets/styles/openeditor/open-editor.css') }}" rel="stylesheet">
+    <style>
+        .openeditor-demo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .language-tabs .nav-link {
+            border: none;
+            border-radius: 0.25rem 0.25rem 0 0;
+        }
+        
+        .language-tabs .nav-link.active {
+            background-color: #fff;
+            color: #212529;
+            border-bottom: 3px solid #0d6efd;
+        }
+        
+        .translation-panel {
+            background: #f8f9fa;
+            border-radius: 0 0.5rem 0.5rem 0.5rem;
+            padding: 1.5rem;
+        }
+        
+        .service-config {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="openeditor-demo">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h2 mb-3">
+                    <i class="bi bi-magic"></i> Test OpenEditor
+                </h1>
+                <p class="lead mb-0">
+                    Découvrez OpenEditor intégré au système de gestion des services d'OpenCMS.
+                    Éditeur WYSIWYG moderne avec gestionnaire de médias intégré.
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                    <a href="{{ path('admin_test_openeditor_index') }}" class="btn btn-light">
+                        <i class="bi bi-list"></i> Liste
+                    </a>
+                    <a href="{{ path('admin_test_openeditor_demo') }}" class="btn btn-outline-light">
+                        <i class="bi bi-play"></i> Démo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+    
+    <div class="row">
+        <!-- Configuration du Service -->
+        <div class="col-lg-4">
+            <div class="card service-config h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear"></i> Configuration du Service
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form_label(form.slug) }}
+                        {{ form_widget(form.slug) }}
+                        {{ form_help(form.slug) }}
+                        {{ form_errors(form.slug) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.image) }}
+                        {{ form_widget(form.image) }}
+                        {{ form_help(form.image) }}
+                        {{ form_errors(form.image) }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.sortOrder) }}
+                        {{ form_widget(form.sortOrder) }}
+                        {{ form_help(form.sortOrder) }}
+                        {{ form_errors(form.sortOrder) }}
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form_widget(form.isActive) }}
+                            {{ form_label(form.isActive) }}
+                        </div>
+                        {{ form_help(form.isActive) }}
+                        {{ form_errors(form.isActive) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traductions avec OpenEditor -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-translate"></i> Traductions avec OpenEditor
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Language Tabs -->
+                    <ul class="nav nav-tabs language-tabs" id="languageTabs" role="tablist">
+                        {% for language in languages %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ loop.first ? 'active' : '' }}" 
+                                    id="{{ language.code }}-tab" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#{{ language.code }}-content" 
+                                    type="button" 
+                                    role="tab">
+                                <span class="flag-icon flag-icon-{{ language.code }}"></span>
+                                {{ language.name }}
+                                <span class="badge bg-secondary ms-1">{{ language.code|upper }}</span>
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="languageTabsContent">
+                        {% for language in languages %}
+                        <div class="tab-pane fade {{ loop.first ? 'show active' : '' }}" 
+                             id="{{ language.code }}-content" 
+                             role="tabpanel">
+                            <div class="translation-panel">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>{{ language.name }}</strong> - 
+                                    Utilisez OpenEditor pour créer du contenu riche avec médias intégrés
+                                </div>
+                                
+                                {% set translationForm = form['translation_' ~ language.code] %}
+                                
+                                <!-- Titre -->
+                                <div class="mb-3">
+                                    {{ form_label(translationForm.title) }}
+                                    {{ form_widget(translationForm.title) }}
+                                    {{ form_help(translationForm.title) }}
+                                    {{ form_errors(translationForm.title) }}
+                                </div>
+
+                                <!-- Description avec OpenEditor -->
+                                <div class="mb-3">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-header bg-light">
+                                            <strong>{{ form_label(translationForm.description).vars.label }}</strong>
+                                            <span class="badge bg-primary ms-2">OpenEditor</span>
+                                        </div>
+                                        <div class="card-body">
+                                            {{ form_row(translationForm.description) }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Méta SEO -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        {{ form_row(translationForm.metaTitle) }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form_row(translationForm.metaDescription) }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check"></i> 
+                            Tous les champs sont validés automatiquement
+                        </small>
+                    </div>
+                    <div>
+                        <a href="{{ path('admin_test_openeditor_index') }}" class="btn btn-secondary me-2">
+                            <i class="bi bi-arrow-left"></i> Annuler
+                        </a>
+                        {{ form_widget(form.save, {'attr': {'class': 'btn btn-primary'}}) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/js/openeditor/open-editor.js') }}"></script>
+    <script>
+        // Initialisation personnalisée d'OpenEditor pour le test
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initialisation de OpenEditor pour le test...');
+            
+            // Attendre que jQuery soit chargé
+            if (typeof $ !== 'undefined') {
+                // Configuration spéciale pour le test
+                $('.open-editor-field').each(function() {
+                    const $field = $(this);
+                    console.log('Initialisation OpenEditor pour:', $field.attr('id'));
+                    
+                    // Initialiser avec des options de test
+                    $field.openEditor({
+                        theme: 'modern',
+                        height: '350px',
+                        toolbar: {
+                            config: 'full'
+                        }
+                    });
+                });
+
+                // Messages de statut
+                setTimeout(function() {
+                    if (window.OpenEditor) {
+                        console.log('✅ OpenEditor chargé et disponible');
+                        
+                        // Ajouter un indicateur visuel
+                        $('.open-editor-info').each(function() {
+                            $(this).append(' | <span class="text-success"><i class="bi bi-check-circle"></i> Actif</span>');
+                        });
+                    } else {
+                        console.warn('⚠️ OpenEditor non disponible');
+                    }
+                }, 1000);
+            } else {
+                console.error('❌ jQuery non disponible - OpenEditor ne peut pas s\'initialiser');
+            }
+        });
+    </script>
+{% endblock %}
