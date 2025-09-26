@@ -86,9 +86,7 @@ Encore
         'window.jQuery': 'jquery',
         bootstrap: 'bootstrap',
         'window.bootstrap': 'bootstrap'
-
     })
-    .enableStimulusBridge('./assets/controllers.json')
 
 ;
 

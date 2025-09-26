@@ -104,13 +104,23 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}/toggle-active', name: 'toggle_active', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function toggleActive(User $user): Response
+    public function toggleActive(Request $request, User $user): Response
     {
-        $user->setIsActive(!$user->isActive());
-        $this->entityManager->flush();
+        // Prevent self-deactivation
+        if ($user === $this->getUser() && $user->isActive()) {
+            $this->addFlash('error', 'Vous ne pouvez pas désactiver votre propre compte.');
+            return $this->redirectToRoute('admin_user_index');
+        }
 
-        $status = $user->isActive() ? 'activé' : 'désactivé';
-        $this->addFlash('success', "L'utilisateur a été {$status} avec succès.");
+        if ($this->isCsrfTokenValid('toggle_active'.$user->getId(), $request->request->get('_token'))) {
+            $user->setIsActive(!$user->isActive());
+            $this->entityManager->flush();
+
+            $status = $user->isActive() ? 'activé' : 'désactivé';
+            $this->addFlash('success', "L'utilisateur a été {$status} avec succès.");
+        } else {
+            $this->addFlash('error', 'Token de sécurité invalide.');
+        }
 
         return $this->redirectToRoute('admin_user_index');
     }
