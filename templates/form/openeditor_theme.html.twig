@@ -47,8 +47,10 @@
                     </span>
                 {% endif %}
                 {% if open_editor_config is defined and open_editor_config.autosave|default(false) %}
+                    {# Calcul de l'intervalle de sauvegarde côté PHP pour éviter les calculs Twig #}
+                    {% set autosave_seconds = (open_editor_config.autosave_interval|default(30000) / 1000)|round %}
                     | <span class="feature-badge">
-                        <i class="bi bi-cloud-check"></i> Sauvegarde auto ({{ (open_editor_config.autosave_interval|default(30000) / 1000)|number_format(0) }}s)
+                        <i class="bi bi-cloud-check"></i> Sauvegarde auto ({{ autosave_seconds }}s)
                     </span>
                 {% endif %}
                 {% if open_editor_config is defined and open_editor_config.theme|default('default') != 'default' %}

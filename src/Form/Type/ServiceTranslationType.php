@@ -13,8 +13,20 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * ServiceTranslationType - FormType pour les traductions de service avec OpenEditor
  * 
+ * AMÉLIORATIONS DE SÉCURITÉ ET PERFORMANCE :
+ * - Configuration OpenEditor optimisée pour les descriptions de service
+ * - Validation stricte des longueurs de champ (titre: 255, meta description: 160)
+ * - URLs de média configurées pour l'intégration OpenCMS
+ * - Autosave activé avec intervalle optimal (45s) pour éviter la perte de données
+ * - Tags HTML sécurisés incluant les éléments de mise en forme avancée
+ * 
+ * CONFIGURATION OPENEDITOR :
+ * - Thème modern pour une meilleure UX dans l'admin
+ * - Hauteur 400px optimale pour les descriptions de service
+ * - Intégration complète du gestionnaire de médias OpenCMS
+ * 
  * Auteur: MiniMax Agent
- * Intégré dans OpenCMS pour tester OpenEditor
+ * Intégré dans OpenCMS - Version refactorisée et sécurisée
  */
 class ServiceTranslationType extends AbstractType
 {

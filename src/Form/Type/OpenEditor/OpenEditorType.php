@@ -82,32 +82,55 @@ class OpenEditorType extends AbstractType
     }
 
     /**
-     * Valider la configuration
+     * Valider la configuration avec une gestion d'erreurs améliorée
      */
     private function validateConfig(array $config): void
     {
-        // Validation des URLs
+        // Validation des URLs avec messages d'erreur spécifiques
         $urlFields = ['media_manager_url', 'upload_url', 'browse_url'];
         foreach ($urlFields as $field) {
             if (!empty($config[$field]) && !$this->isValidUrl($config[$field])) {
                 throw new InvalidConfigurationException(
-                    sprintf('L\'option "%s" doit être une URL valide.', $field)
+                    sprintf('L\'option "%s" contient une URL invalide: "%s". URLs autorisées: URLs absolues valides ou chemins relatifs sécurisés commençant par "/".',
+                        $field, $config[$field])
                 );
             }
         }
 
-        // Validation des entiers positifs
-        if ($config['autosave_interval'] <= 0) {
+        // Validation de l'intervalle de sauvegarde automatique
+        if (!is_int($config['autosave_interval']) || $config['autosave_interval'] <= 0) {
             throw new InvalidConfigurationException(
-                'L\'option "autosave_interval" doit être un entier positif.'
+                sprintf('L\'option "autosave_interval" doit être un entier positif, reçu: %s',
+                    is_int($config['autosave_interval']) ? $config['autosave_interval'] : gettype($config['autosave_interval']))
             );
         }
 
-        // Validation de la hauteur (doit contenir px, em, %, etc.)
-        if (!preg_match('/^\d+(px|em|%|rem|vh)$/', $config['height'])) {
+        // Validation de la hauteur avec regex plus permissive
+        if (!preg_match('/^\d+(\.\d+)?(px|em|%|rem|vh|vw|ch|ex)$/', $config['height'])) {
             throw new InvalidConfigurationException(
-                'L\'option "height" doit être une valeur CSS valide (ex: "300px", "20em").'
+                sprintf('L\'option "height" doit être une valeur CSS valide (ex: "300px", "20em", "50vh"), reçu: "%s"',
+                    $config['height'])
             );
+        }
+        
+        // Validation des tags HTML autorisés
+        if (!empty($config['allowed_tags'])) {
+            $tags = explode(',', $config['allowed_tags']);
+            $invalidTags = [];
+            
+            foreach ($tags as $tag) {
+                $tag = trim($tag);
+                if (!preg_match('/^[a-zA-Z][a-zA-Z0-9]*$/', $tag)) {
+                    $invalidTags[] = $tag;
+                }
+            }
+            
+            if (!empty($invalidTags)) {
+                throw new InvalidConfigurationException(
+                    sprintf('Tags HTML invalides détectés dans "allowed_tags": %s. Seuls les noms de tags HTML valides sont acceptés.',
+                        implode(', ', $invalidTags))
+                );
+            }
         }
     }
 
@@ -139,29 +162,27 @@ class OpenEditorType extends AbstractType
 
     /**
      * Valider si une chaîne est une URL valide
+     * Corrige le bug critique de la version précédente
      */
     private function isValidUrl(string $url): bool
     {
-        try {
-            // Vérifier si c'est une URL absolue valide
-            new \Symfony\Component\Routing\Generator\UrlGenerator(
-                new \Symfony\Component\Routing\RouteCollection(),
-                new \Symfony\Component\Routing\RequestContext()
-            );
-            filter_var($url, FILTER_VALIDATE_URL);
+        // D'abord tester si c'est une URL absolue valide
+        if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
             return true;
-        } catch (\Exception $e) {
-            // Pour les chemins relatifs, vérifier qu'ils sont sécurisés
-            if (str_starts_with($url, '/')) {
-                // Rejeter les chemins avec traversal
-                if (str_contains($url, '..') || str_contains($url, '//')) {
-                    return false;
-                }
-                // Vérifier le format du chemin
-                return preg_match('/^\/[a-zA-Z0-9\/_-]*$/', $url) === 1;
-            }
-            return false;
         }
+        
+        // Pour les chemins relatifs, vérifier qu'ils sont sécurisés
+        if (str_starts_with($url, '/')) {
+            // Rejeter les chemins avec traversal de répertoire
+            if (str_contains($url, '..') || str_contains($url, '//')) {
+                return false;
+            }
+            
+            // Vérifier le format du chemin avec caractères autorisés étendus
+            return preg_match('/^\/[a-zA-Z0-9\/_.-]*$/', $url) === 1;
+        }
+        
+        return false;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

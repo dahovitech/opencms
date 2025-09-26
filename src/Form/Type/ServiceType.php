@@ -20,8 +20,19 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * ServiceType - FormType principal pour la gestion des services avec OpenEditor
  * 
+ * ARCHITECTURE DES TRADUCTIONS :
+ * - Les traductions sont gérées via des sous-formulaires dynamiques nommés 'translation_{code_langue}'
+ * - Chaque sous-formulaire utilise ServiceTranslationType qui inclut OpenEditor pour la description
+ * - Les traductions ne sont pas mappées directement à l'entité Service (gestion manuelle dans le contrôleur)
+ * - Cette approche permet une validation granulaire par langue tout en conservant la flexibilité
+ * 
+ * GESTION DES ERREURS :
+ * - Validation des sous-formulaires de traductions via ServiceTranslationType
+ * - Gestion des erreurs OpenEditor intégrée dans le theme de formulaire
+ * - Validation des relations Service-Language dans le contrôleur
+ * 
  * Auteur: MiniMax Agent
- * Intégré dans OpenCMS pour tester OpenEditor avec traductions multiples
+ * Intégré dans OpenCMS - Version refactorisée avec amélioration de la robustesse
  */
 class ServiceType extends AbstractType
 {

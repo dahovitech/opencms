@@ -61,23 +61,33 @@ class ServiceController extends AbstractController
                 // Sauvegarder le service principal
                 $this->entityManager->persist($service);
                 
-                // Traiter les traductions
+                // Traiter les traductions avec une logique plus robuste
                 foreach ($languages as $language) {
                     $translationFormName = 'translation_' . $language->getCode();
                     if ($form->has($translationFormName)) {
-                        $translationData = $form->get($translationFormName)->getData();
+                        $translationForm = $form->get($translationFormName);
                         
-                        if ($translationData && (!empty($translationData->getTitle()) || !empty($translationData->getDescription()))) {
-                            $translation = new ServiceTranslation();
-                            $translation->setService($service);
-                            $translation->setLanguage($language);
-                            $translation->setTitle($translationData->getTitle() ?? '');
-                            $translation->setDescription($translationData->getDescription() ?? '');
-                            $translation->setMetaTitle($translationData->getMetaTitle() ?? '');
-                            $translation->setMetaDescription($translationData->getMetaDescription() ?? '');
+                        // Vérifier que le sous-formulaire est valide et contient des données
+                        if ($translationForm->isValid()) {
+                            $translationData = $translationForm->getData();
                             
-                            $this->entityManager->persist($translation);
-                            $service->addTranslation($translation);
+                            // Vérifier que l'objet existe et contient au moins un titre ou une description
+                            if ($translationData instanceof ServiceTranslation && 
+                                (!empty(trim($translationData->getTitle() ?? '')) || !empty(trim($translationData->getDescription() ?? '')))) {
+                                
+                                // Configurer la traduction
+                                $translationData->setService($service);
+                                $translationData->setLanguage($language);
+                                
+                                // S'assurer que les champs vides sont définis comme chaînes vides plutôt que null
+                                $translationData->setTitle(trim($translationData->getTitle() ?? ''));
+                                $translationData->setDescription(trim($translationData->getDescription() ?? ''));
+                                $translationData->setMetaTitle(trim($translationData->getMetaTitle() ?? ''));
+                                $translationData->setMetaDescription(trim($translationData->getMetaDescription() ?? ''));
+                                
+                                $this->entityManager->persist($translationData);
+                                $service->addTranslation($translationData);
+                            }
                         }
                     }
                 }
@@ -215,26 +225,29 @@ class ServiceController extends AbstractController
                         
                         $existingTranslation = $service->getTranslation($language->getCode());
                         
-                        if ($translationData && (!empty($translationData->getTitle()) || !empty($translationData->getDescription()))) {
+                        if ($translationData instanceof ServiceTranslation && 
+                            (!empty(trim($translationData->getTitle() ?? '')) || !empty(trim($translationData->getDescription() ?? '')))) {
+                            
                             if ($existingTranslation) {
                                 // Mettre à jour la traduction existante
-                                $existingTranslation->setTitle($translationData->getTitle() ?? '');
-                                $existingTranslation->setDescription($translationData->getDescription() ?? '');
-                                $existingTranslation->setMetaTitle($translationData->getMetaTitle() ?? '');
-                                $existingTranslation->setMetaDescription($translationData->getMetaDescription() ?? '');
+                                $existingTranslation->setTitle(trim($translationData->getTitle() ?? ''));
+                                $existingTranslation->setDescription(trim($translationData->getDescription() ?? ''));
+                                $existingTranslation->setMetaTitle(trim($translationData->getMetaTitle() ?? ''));
+                                $existingTranslation->setMetaDescription(trim($translationData->getMetaDescription() ?? ''));
                                 $existingTranslation->setUpdatedAt();
                             } else {
                                 // Créer une nouvelle traduction
-                                $translation = new ServiceTranslation();
-                                $translation->setService($service);
-                                $translation->setLanguage($language);
-                                $translation->setTitle($translationData->getTitle() ?? '');
-                                $translation->setDescription($translationData->getDescription() ?? '');
-                                $translation->setMetaTitle($translationData->getMetaTitle() ?? '');
-                                $translation->setMetaDescription($translationData->getMetaDescription() ?? '');
+                                $translationData->setService($service);
+                                $translationData->setLanguage($language);
                                 
-                                $this->entityManager->persist($translation);
-                                $service->addTranslation($translation);
+                                // S'assurer que les champs sont proprement définis
+                                $translationData->setTitle(trim($translationData->getTitle() ?? ''));
+                                $translationData->setDescription(trim($translationData->getDescription() ?? ''));
+                                $translationData->setMetaTitle(trim($translationData->getMetaTitle() ?? ''));
+                                $translationData->setMetaDescription(trim($translationData->getMetaDescription() ?? ''));
+                                
+                                $this->entityManager->persist($translationData);
+                                $service->addTranslation($translationData);
                             }
                         } elseif ($existingTranslation) {
                             // Supprimer la traduction si elle est vide
